@@ -1,6 +1,7 @@
 import pan.xapi
 import xml.etree.ElementTree as ET
 from getpass import getpass
+from datetime import datetime
 
 # Variables to authenticate
 cred = {}
@@ -8,13 +9,31 @@ cred['api_username'] = input("User: ")
 cred['api_password'] = getpass("Password: ")
 cred['hostname'] = input("Palo Alto Hostname or IP Address: ")
 
+
+
+
 import creds
 cred = creds.get_cred()
 
-# Creates file to log rules unchanged by automation
-rules_unchanged = open('rules_unchanged.txt','a')
-# Creates file to log rules updated by automation
-updated_rules = open('updated_rules.txt', 'a')
+
+# Creates file to log execution
+log_file = open('logging.txt','a')
+# Creates file to log rules unchanged or failed tasks
+fail = open('fail.txt','a')
+# Creates file to log rules updated or successed tasks
+success = open('success.txt', 'a')
+
+# Writes log on correct files
+def logging(message,status = None):
+    log_file.write(message+" -- \
+        "+datetime.now().strftime("%Y-%m-%d--%H-%M-%S")+"\n")
+    if status == 'success':
+        success.write(message+" -- \
+            "+datetime.now().strftime("%Y-%m-%d--%H-%M-%S")+"\n")
+    elif status == 'fail':
+        fail.write(message+" -- \
+            "+datetime.now().strftime("%Y-%m-%d--%H-%M-%S")+"\n")
+    return message
 
 # Authenticates on Palo Alto API
 xapi = pan.xapi.PanXapi(**cred)
@@ -54,8 +73,8 @@ for vsys in vsys_list:
 
 
 
-
-            updated_rules.write(''+'\n')
+            
+            print(logging('','success'))
 
         # Continues on Rules with profile-setting configured
         else:
@@ -63,10 +82,8 @@ for vsys in vsys_list:
             for params in current_rule:
                 # Identifies Rules configured with profile groups
                 if params.tag == 'group':
-                    unchanged = 'Rule %s has a profile group...\
-                        ' % (rule.attrib['name'])
-                    print(unchanged)
-                    rules_unchanged.write(str(unchanged)+'\n')
+                    print(logging('Rule %s has a profile group\
+                        ' % (rule.attrib['name']),'fail'))
                 
                 # Identifies Rules configured with profiles individually
                 elif params.tag == 'profiles':
@@ -82,7 +99,8 @@ for vsys in vsys_list:
 
 
 
-                            updated_rules.write(''+'\n')
+                            print(logging('Rule %s has a tp policy configured\
+                                ' % (rule.attrib['name']),'fail'))
                     
                     # Identifies Rules that does not have a Threat-
                     # Prevention policy configured
@@ -92,12 +110,12 @@ for vsys in vsys_list:
 
 
 
-                        updated_rules.write(''+'\n')
+                        print(logging('Rule %s updated with tp policy\
+                            ' % (rule.attrib['name']),'success'))
                 else:
-                    unchanged = 'Rule %s has an unknown parameter...\
-                        ' % (rule.attrib['name'])
-                    print(unchanged)
-                    rules_unchanged.write(str(unchanged)+'\n')
+                    print(logging('Rule %s has an unknown parameter\
+                        ' % (rule.attrib['name']),'fail'))
 
-rules_unchanged.close()
-updated_rules.close()
+fail.close()
+success.close()
+log_file.close()
