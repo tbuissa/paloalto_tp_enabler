@@ -15,13 +15,12 @@ cred['hostname'] = input("Palo Alto Hostname or IP Address: ")
 import creds
 cred = creds.get_cred()
 
-rules_no_ps = 0
-rules_group_ps = 0
-rules_profile_ps = 0
-rules_profile_no_ps = 0
 
-
-
+#Counting Rules Variables
+rules_no_ps = 0 # Rules with no profile-setting configure yet
+rules_group_ps = 0 # Rules with profile-setting configured with group
+rules_profile_ps = 0 # Rules with profile-setting configured with threat policy
+rules_profile_no_ps = 0 # Rules with profile-setting configured without threat policy
 
 # Creates file to log execution
 log_file = open('logging.txt','a')
@@ -32,7 +31,7 @@ success = open('success.txt', 'a')
 
 # Writes log on correct files
 def logging(message,status = None):
-    log_file.write(datetime.now().strftime("%Y-%m-%d--%H-%M-%S")+message+" -- \
+    log_file.write(datetime.now().strftime("%Y-%m-%d--%H-%M-%S")+" "+message+" -- \
     "+"\n")
     if status == 'success':
         success.write(message+" -- \
@@ -72,8 +71,8 @@ for vsys in vsys_list:
         print(xapi.xml_result())
     except:
         print()
-        print('Vsys %s does not have rules to be configured...\
-            ' % (vsys.attrib['name']))
+        print(logging('Vsys %s does not have rules to be configured...\
+            ' % (vsys.attrib['name'])))
         print()
 
     # For loop to iterate Rules with or without profile-setting
