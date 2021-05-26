@@ -59,11 +59,12 @@ except Exception as err:
 
 # Executes show command to retreive configurations of all vsys
 try:
-    xapi.show("/config/devices/entry/vsys")
+    #xapi.show("/config/devices/entry/vsys")
+    xapi.get("/config/devices/entry[@name='localhost.localdomain']/vsys")
 except pan.xapi.PanXapiError as err:
     print(str(err))
 vsys_list = ET.fromstring(str(xapi.xml_result()))
-
+print(vsys_list)
 
 # For loop to iterate through vsys in Palo Alto
 for vsys in vsys_list:
